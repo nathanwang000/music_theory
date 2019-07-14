@@ -1,0 +1,17 @@
+The aim of the project is to help me pick up music theory.
+
+My target instrument is guitar. 
+
+A few functionality includes
+
+- [X] printing out scales
+- [ ] look up chord fingerings
+- [ ] recognize name of a chord
+- [ ] generating random chord for practice
+- [ ] generate flow given a sample
+
+A few advanced functionalities I aim to include
+- [ ] recognize chord given sound input (fourier transform)
+- [ ] music composition
+- [ ] recognize tempo
+
