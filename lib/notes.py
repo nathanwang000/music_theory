@@ -2,7 +2,6 @@ name2number = {
     'C': 0, 'Db': 1, 'C#': 1, 'D': 2, 'Eb': 3, 'D#': 3, 'E': 4, 'F': 5,
     'Gb': 6, 'F#': 6, 'G': 7, 'Ab': 8, 'G#': 8, 'A': 9, 'Bb': 10, 'A#': 10, 'B': 11
 }
-
 number2name = dict((val, n) for n, val in name2number.items())
 
 NOTES = list(number2name.values())
@@ -25,8 +24,10 @@ class Note:
                         number_rep -= 1
             self.rep = number_rep % 12 # todo: think about whether wrap around
 
+        self.name = number2name[self.rep]
+
     def __repr__(self):
-        return "{}".format(number2name[self.rep])
+        return self.name
 
     def __add__(self, other_interval):
         assert type(other_interval) is Interval
@@ -34,16 +35,18 @@ class Note:
 
     def __sub__(self, other):
         assert type(other) is Note
-        return Interval(self.rep - other.rep)
-    
+        # todo: think about whether wrap around
+        return Interval((self.rep - other.rep) % 12) 
 
 class Interval:
     '''
     distance measure for music
+    
+    eg. Interval('m2') == Interval(1) == 1 == 'm2'
     '''
     def __init__(self, name):
         named_interval = ['m2', 'M2', 'm3', 'M3', 'P4', 'tritone',
-                          'P5', 'm6', 'M6']
+                          'P5', 'm6', 'M6', 'm7', 'M7']
         self.name2rep = lambda x: 1 + named_interval.index(x)
         self.rep2name = lambda n: str(n) if (n<=0 or n>=12) else named_interval[n-1]
         
@@ -68,9 +71,10 @@ class Interval:
         else:
             raise Error("not implemented")
 
-    def __sub__(self, other):
-        assert type(other) is Interval, "interval can only substract interval"
-        return Interval(self.rep - other.rep)
+    def __eq__(self, other):
+        if type(other) != Interval:
+            other = Interval(other)
+        return self.rep == other.rep
         
 class Scale:
 
@@ -95,22 +99,22 @@ class Scale:
 
         if self.major:
             pattern = [0, 2, 2, 1, 2, 2, 2, 1]
-            notes = self.fill_pattern(pattern)
+            notes = self.fill_pattern_(pattern)
         else:
             if minor_mode == 'natural':
                 pattern = [0, 2, 1, 2, 2, 1, 2, 2]
-                notes = self.fill_pattern(pattern)
+                notes = self.fill_pattern_(pattern)
             elif minor_mode == 'harmonic':
                 pattern = [0, 2, 1, 2, 2, 1, 3, 1]
-                notes = self.fill_pattern(pattern)
+                notes = self.fill_pattern_(pattern)
             else: # melodic
                 pattern = [0, 2, 1, 2, 2, 2, 2, 1, # up
                            -2, -2, -1, -2, -2, -1, -2]
-                notes = self.fill_pattern(pattern)
+                notes = self.fill_pattern_(pattern)
                 
         self.notes = notes
 
-    def fill_pattern(self, pattern):
+    def fill_pattern_(self, pattern):
         notes = []
         cumsum = 0
         for p in pattern:
@@ -122,5 +126,58 @@ class Scale:
         res = ""
         if self.major: res += 'major: '
         else: res += '{} minor: '.format(self.minor_mode)
-        return res + ','.join(map(str, self.notes))        
-        
+        return res + ','.join(map(str, self.notes))
+
+    def chord(self, chord_number):
+        assert chord_number < 8 and chord_number > 0, "chord number in [1,7]"
+        pattern = [0, 2, 4] 
+        pattern = map(lambda x: (x + chord_number - 1) % 7, pattern)
+        notes = [self.notes[i] for i in pattern]
+        return Chord(notes)
+
+class Chord:
+    '''
+    chords are just more than 3 notes together
+    assume no inversion applied (sorted)
+    
+    current modes support:
+    M: major (1, 3, 5), occur in 1 4 5 major scale or 3 6 7 minor scale
+    m: minor (1, 3b, 5), 
+    o: diminished (1, 3b, 5b)
+    +: augmented (1, 3, 5#)
+    '''
+
+    def __init__(self, notes):
+        assert len(notes) >= 3, "chord need 3 or more notes"
+        self.notes = []
+        for note in notes:
+            if type(note) != Note:
+                note = Note(note)
+            self.notes.append(note)
+
+        # determine chord type
+        self.mode = ""        
+        notes = self.notes
+        if notes[1] - notes[0] == 'M3': # M3
+            if notes[2] - notes[0] == 'P5': # P5
+                self.mode = 'M' # major
+            elif notes[2] - notes[0] == 'm6':
+                self.mode = '+' # augmented
+        elif notes[1] - notes[0] == 'm3': # m3
+            if notes[2] - notes[0] == 'P5': # P5
+                self.mode = 'm' # minor
+            elif notes[2] - notes[0] == 'tritone': # tritone
+                self.mode = 'o' # diminished
+        elif notes[1] - notes[0] == 'P4': # P4
+            if notes[2] - notes[0] == 'P5': # P5
+                self.mode = 'sus4' # sus4 cord
+        elif notes[1] - notes[0] == 'M2': # M2
+            if notes[2] - notes[0] == 'P5': # P5
+                self.mode = 'sus2' # sus2 cord
+
+    def __repr__(self):
+        res = self.mode
+        return res + self.notes.__repr__()
+            
+
+    

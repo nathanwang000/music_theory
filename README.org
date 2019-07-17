@@ -15,3 +15,56 @@ A few advanced functionalities I aim to include
 - [ ] music composition
 - [ ] recognize tempo
 
+* Guitar practice routine
+
+- [ ] exercises: alt. picking, sweep picking, legato, hybrid picking
+- [X] scales: random scales: harmonic minor, whole tone, melodic minor
+- [ ] chords: should lay out fret
+- [ ] sight read: easy for me
+- [ ] theory: 4 part arpeggios, triad inversion
+- [ ] song writing
+- [ ] improv
+- [ ] ear training: identify interval
+
+sign up when I'm ready to learn improvisation!
+
+https://musiciswin.com/
+
+* notes
+
+** diatonic harmony 
+
+reference: [[https://www.artofcomposing.com/08-diatonic-harmony][art of composing]]
+
+diatonic just means major scale, applied to chord progression, 
+
+name of notes
+
+tonic, supertonic, mediant, sub-dominant, dominat, sub-mediant, leading tone
+
+- tonic function
+
+  home base for tonal music. either use tonic or sub-mediant (6)
+
+- dominant function
+
+  5 or diminished 7, create tension
+
+- pre-dominant function
+  
+  prepare dominant, use 2 and 4
+
+
+** [todo: add to my list] seventh cord
+   
+   dominant 7: V7
+   major 7: just add 7
+   minor 7: just add 7
+   half diminished 7: minor with diminshed 5 and regular 7
+   diminished 7: minor with diminished 5 and diminished 7
+
+** [todo: add chord inversion] inversion
+
+   put lower note upward
+
+** [todo: caged] caged to fret
