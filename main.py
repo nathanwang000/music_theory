@@ -54,5 +54,9 @@ def random_diatonic_harmony(scale):
 scale = random_scale(root_notes=['C'], majors=[True])
 print(scale)
 random_diatonic_harmony(scale)
-    
+
+scale = random_scale(root_notes=['A'], majors=[True])
+print(scale)
+random_diatonic_harmony(scale)
+
 
