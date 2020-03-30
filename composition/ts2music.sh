@@ -1,6 +1,7 @@
 #!/bin/bash
 echo $1
-python text2music.py -t "$1" > tmp.ly
+# python ts2music.py -t $1 > tmp.ly
+python ts2music.py > tmp.ly
 lilypond tmp.ly
 timidity tmp.midi
 
