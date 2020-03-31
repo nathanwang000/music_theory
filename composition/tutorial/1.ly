@@ -7,7 +7,7 @@
 	       \clef "treble"
                \time 4/4
                \key aes \major
-	       \tempo 2=30
+	       \tempo 4=120
 	       
                r8 aes c f' ees4. ees8 | c4. des8 f,4 ees |
                r4 ees8 ees c'4. bes16 c | bes4 aes r2 \bar "|."
@@ -21,6 +21,7 @@
 	       }
 	 >>
 	 }
+       \layout {}
        \midi {}
 }
 

@@ -20,12 +20,12 @@ def normalize(ts, n_notes):
 def number2note(n, n_notes):
     note, pitch = n % 7, n // 7
     notes = ['c', 'd', 'e', 'f', 'g', 'a', 'b']
-    return "{}{}".format(notes[note], "'" * pitch)
+    return "{}{}".format(notes[note], "'" * (pitch+1))
 
 def transpose(ts, notes, degree):
     return [notes[(notes.index(note) - degree) % len(notes)] for note in ts]
 
-def main(args, span=4, time_signature=32, key='c', bass_degree=3):
+def main(args, span=4, time_signature=4, key='c', bass_degree=3, bass_ts=None):
     '''
     span: how many 7 notes span
     '''
@@ -39,13 +39,22 @@ def main(args, span=4, time_signature=32, key='c', bass_degree=3):
     ts = normalize(args.t, n_notes-1) # -1 for note using the n_notes note b/c 0 based
     ts = list(map(n2note, ts))
     logging.warning(ts)
-    bass = transpose(ts, notes, bass_degree)
+
+    if bass_ts is None:
+        bass = transpose(ts, notes, bass_degree)
+    else:
+        bass = normalize(bass_ts, n_notes-1)
+        bass = list(map(n2note, bass))
+        logging.warning(bass)        
 
     staff = "\score{\n\\new PianoStaff << \n"
-    staff += "  \\new Staff {" + " ".join(map(lambda x: x + str(time_signature),
+    staff += "  \\new Staff { \\tempo 4=210 \\time 3/4 " + " ".join(map(lambda x: x + str(time_signature),
                                               ts)) + "}\n"
-    staff += "  \\new Staff {\clef bass "+" ".join(map(lambda x: x + str(time_signature),
+    # staff += "  \\new Staff {\clef bass "+" ".join(map(lambda x: x + str(time_signature),
+    #                                                   bass)) + "}\n"
+    staff += "  \\new Staff {"+" ".join(map(lambda x: x + str(time_signature),
                                                       bass)) + "}\n"  
+    
     
     staff += ">>\n \layout {} \midi{} }\n"
 
@@ -59,7 +68,8 @@ def main(args, span=4, time_signature=32, key='c', bass_degree=3):
     
 if __name__ == '__main__':
     ts = np.linspace(0, 4*np.pi, 40) 
-
+    bass_ts = None
+    
     def fib(length):
         ret = [1,1]
         while length > len(ret):
@@ -73,8 +83,8 @@ if __name__ == '__main__':
             n *= 10
         return ret[:length]
 
-    def stock(ticker, length):
-        prices = yf.download(ticker)
+    def stock(ticker, length, interval='1d'):
+        prices = yf.download(ticker, interval=interval)
         return np.array(prices['Close'])[-length:]
     
     # args.t = np.sin(ts)
@@ -82,5 +92,9 @@ if __name__ == '__main__':
     # args.t = decimal(np.pi, len(ts))
     # args.t = decimal(np.e, len(ts))
     # args.t = decimal(np.sqrt(2), len(ts))
-    args.t = stock('AAPL', len(ts))
-    main(args, bass_degree=5)
+    args.t = stock('MSFT', len(ts), interval='1d')
+    # args.t = stock('GOOGL', len(ts)) # variations F
+    # bass_ts = stock('GOOGL', len(ts))
+
+    # ideas to try: bass note try to use 12 bar blues or things of that sort
+    main(args, span=2, bass_degree=5, bass_ts=bass_ts)
