@@ -1,11 +1,6 @@
-import argparse
 import itertools
 from functools import partial
 import numpy as np
-
-parser = argparse.ArgumentParser(description="simple composition tool try")
-parser.add_argument('-t', type=str, nargs='+', default=['c', 'e', 'g'])
-args = parser.parse_args()
 
 def main(lines, tempo='4=140', time_signature='4/4'):
     '''
@@ -106,7 +101,7 @@ def build_scale(root, mode='Ionian'):
     
     return scale
 
-################## note manipulation ############
+################## degrees manipulation ############
 def invert(degrees, root=1):
     '''invert a series of degrees where each degree could be a
     int or a tuple of int, treat root as the invariant'''
@@ -291,8 +286,8 @@ def variation_idea0(degrees, rhythm, scale, unit, tempo):
     main(lines, tempo=tempo)
     
 ################# specific pieces ################
-def pagnini24():
-    scale = build_scale("a'", 'aeolian')
+def pagnini24(mode='aeolian'):
+    scale = build_scale("a'", mode)
     unit = 16
     tempo = '4=140'    
     degrees = [1, 1,
@@ -311,11 +306,12 @@ def pagnini24():
               1, 1, 1, 1,
               4,
               4]
-    return degrees, rhythm, scale, unit, tempo
+    return {'degrees': degrees, 'rhythm': rhythm, 'scale': scale,
+            'unit': unit, 'tempo': tempo}
 
-def shengmusong():
+def shengmusong(mode=0):
     ##### this is for 圣母颂 todo:
-    scale = build_scale("c''")
+    scale = build_scale("c''", mode=mode)
     tempo = '4=140'        
     unit = 4
     degrees = [
@@ -331,12 +327,13 @@ def shengmusong():
         5, 1, 1, 1, 3, 1, 4,
         5, 1, 1, 1, 3, 1, 2, 2, 4
     ]
-    return degrees, rhythm, scale, unit, tempo
+    return {'degrees': degrees, 'rhythm': rhythm, 'scale': scale,
+            'unit': unit, 'tempo': tempo}
 
-def changtingwai():
+def changtingwai(mode=0):
     #### this is a chinese folk song 长亭外 古道边
     tempo = '4=100'
-    scale = build_scale("c''", 5)
+    scale = build_scale("c''", mode=mode)
     unit = 8
     degrees = [
         5, 3, 5, 1+7, 7, 6, 1+7, 5,
@@ -349,15 +346,16 @@ def changtingwai():
         2, 1, 1, 2, 1, 1, 8,
         2, 1, 1, 3, 1, 2, 2, 4,
         2, 1, 1, 2, 2, 8
-    ]    
-    return degrees, rhythm, scale, unit, tempo
+    ]
+    return {'degrees': degrees, 'rhythm': rhythm, 'scale': scale,
+            'unit': unit, 'tempo': tempo}
 
 if __name__ == '__main__':
     # dorian_improv()
 
-    # variation_idea0(*pagnini24())
-    # variation_idea0(*shengmusong())
-    variation_idea0(*changtingwai())    
+    # variation_idea0(**pagnini24())
+    # variation_idea0(**shengmusong())
+    variation_idea0(**changtingwai(5))
 
     ## playground of ideas
     # cmaj = build_scale("c'", 0)
