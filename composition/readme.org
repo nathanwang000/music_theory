@@ -1,0 +1,29 @@
+#+TITLE: Music Theory: A Programmer's Perspective
+
+* Motivation
+
+Music theory is daunting, but once you master it, it opens up new world to both creating and understanding music. However, traditional music theory courses contain loads of jargon and often strip the fun out of the music. Furthermore, to apply the concept, one need to be reasonably good at some instrument, say singing, violin, or guitar, just to name a few.
+
+I think a lot of the concepts can be understood without any jargon and everyone can start applying those concepts to playing music. 
+
+In this project, I want to demonstrate how everyone can start generating music as long as they have a web browser.
+
+I will present a few applications
+
+** apply transformation to existing pieces
+
+examples includes
+- change a major song to a minor song
+- invert the song
+- simple music style transfer
+- creative ways to manipulate music pieces
+
+** transcribe music pieces
+
+- Fourier analysis
+- adding chords
+
+** generating new pieces
+
+- MDP
+

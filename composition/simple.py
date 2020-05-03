@@ -2,7 +2,19 @@ import itertools
 from functools import partial
 import numpy as np
 
-def main(lines, tempo='4=140', time_signature='4/4'):
+name2chord = {
+    'I': [1, 3, 5],
+    'II': [2, 4, 6],
+    'III': [3, 5, 7],
+    'IV': [4, 6, 8],
+    'V': [5, 7, 9],
+    'V7': [5, 7, 9, 11],
+    'VI': [6, 8, 10],
+    'VIIdim': [7, 9, 11]
+}
+
+def main(lines, tempo='4=140', time_signature='4/4',
+         heading='simple chord'):
     '''
     lines: list of time serieses to play
     '''
@@ -17,10 +29,10 @@ def main(lines, tempo='4=140', time_signature='4/4'):
 
     title = """\\version "2.18.2"
     \header {
-    title = "simple chords"
+    title = "%s"
     composer = "Jiaxuan Wang"
     tagline = "Copyright: MIT license"
-    }"""
+    }""" % heading
 
     print(title + body)
 
@@ -135,14 +147,14 @@ def add_rhythm(notes, rhythm_pattern=None, unit=16, assert_equal=True):
     
     def simplify(rythm, note, unit=16):
         '''
-        now is just a dumb slur; should simplfy later
+        now it's grouped by slurs and ties, should change later
         '''
         notes = ['{}{}'.format(note, unit) for _ in range(rythm)]
         for i in range(len(notes)-1):
             notes[i] += '~'
         if len(notes) > 1:
             notes[0] = notes[0] + '('
-            notes[-1] = notes[-1] + ')'        
+            notes[-1] = notes[-1] + ')'
         return ' '.join(notes)
     
     return [simplify(r, n, unit=unit) for r, n in zip(rhythm_pattern, notes)]
@@ -185,6 +197,42 @@ def random_notes(scale):
     choose_from = [scale(i) for i in range(1,8)] + ['r']
     # return [scale(i) for i in np.random.choice(range(1,8), 7)] + ['r']    
     return np.random.choice(choose_from, 8)
+
+def random_chords(scale, M=None, m=None):
+    '''build common functional chord progressions
+    M is the maximum degree to match
+    m is minimum degree to match
+    '''
+    home = [['I'], ['I', 'III'], ['I', 'VI'], ['I', 'III', 'VI'], ['I', 'VI', 'III']]
+    bridge = [['IV'], ['II'], ['IV', 'II'], ['II', 'IV']]
+    outside = [['V7'], ['V'], ['VIIdim']]
+    names = np.random.choice(home) + np.random.choice(bridge) + \
+        outside[np.random.choice(len(outside))] + ['I']
+    # build the chords
+    chords_deg = [name2chord[name] for name in names]
+
+    # simplify chords by matching max and min
+    def match_max_min(degrees, M=None, m=None): # M is max, m is min
+        if M is None or m is None: return degrees
+        new_degrees = []
+        for deg in degrees:
+            if deg > M and (deg-M) % 7 > 1:
+                deg = M + (deg-M) % 7 - 7
+            elif deg < m and (m-deg) % 7 > 1:
+                deg = m - (m-deg) % 7 + 7
+            new_degrees.append(deg)
+        if min(new_degrees) > m + 1:
+           new_degrees.append(max(new_degrees) - 7)
+        if max(new_degrees) < M - 1:
+           new_degrees.append(min(new_degrees) + 7)            
+        return new_degrees
+
+    matched_chords_deg = []
+    for degrees in chords_deg:
+        degrees = match_max_min(degrees, M, m)
+        matched_chords_deg.append(degrees)
+        M, m = max(degrees), min(degrees)        
+    return [chord(scale, i) for i in matched_chords_deg], names
 
 def up_scale(scale):
     '''
@@ -278,7 +326,7 @@ def variation_idea0(degrees, rhythm, scale, unit, tempo):
         add_rhythm([chord(s, [1, 3, 5]), 
                     chord(s, [0, 2, 4, (6, -1)]), 
                     chord(s, [1-7, 3-7, 5-7])],
-                   unit=1),
+                   unit=2),
     )
     
     # output sound
@@ -350,19 +398,60 @@ def changtingwai(mode=0):
     return {'degrees': degrees, 'rhythm': rhythm, 'scale': scale,
             'unit': unit, 'tempo': tempo}
 
+def suoluohe(mode=0):
+    #### 美丽的梭罗河
+    tempo = '4=140'
+    scale = build_scale("c''", mode=mode)
+    unit = 4
+    degrees = [
+        5, 5, 5, 6, 3, 5,
+        1, 2, 3, 2, 1, 3,
+        5, 3, 5, 3+7, 2+7, 7, 5, 6,
+        7, 3+7, 5, 4, 5, 3,
+    ]
+    rhythm = [
+        1, 1, 1, 2, 1, 6,
+        1, 1, 1, 2, 1, 6,
+        2, 1, 2, 1, 2, 1, 2, 1,
+        1, 1, 1, 2, 1, 6
+    ]
+    return {'degrees': degrees, 'rhythm': rhythm, 'scale': scale,
+            'unit': unit, 'tempo': tempo}
+
 if __name__ == '__main__':
     # dorian_improv()
 
     # variation_idea0(**pagnini24())
     # variation_idea0(**shengmusong())
-    variation_idea0(**changtingwai(5))
+    # variation_idea0(**changtingwai(0))
+    # variation_idea0(**suoluohe(0))
 
     ## playground of ideas
     # cmaj = build_scale("c'", 0)
-    # dmaj = build_scale("d'", 0)
     # main([
-    #     add_rhythm([chord(cmaj, [1, 3, 5]), # c7
-    #                 chord(dmaj, [1, 3, 5, (7, -1)]), # d7
-    #                 chord(cmaj, [5-7, 2-7, 7])],
+    #     add_rhythm([chord(cmaj, [1, 3, 5, 8]), # 1, 8
+    #                 chord(cmaj, [3, 5, 7, 7-7]), # 0, 7
+    #                 chord(cmaj, [6, 8, 10-7, 8-7]), # 1, 8
+    #                 chord(cmaj, [8-7, 4, 6, 8]), # 1, 8 ###
+    #                 chord(cmaj, [2, 4, 6, 2+7]), # 2, 9
+    #                 chord(cmaj, [5, 7, 9, 11-7, 2]), # 2, 9
+    #                 chord(cmaj, [1, 3, 5, 8])], # 1, 8
     #                unit=2),
     # ])
+
+    def pattern(scale, degrees, unit=8):
+        # todo: change the pattern below to create different excercises
+        new_degrees = [degrees[i] for i in [0,1,2,1,2,0,1,2]]
+        return add_rhythm([scale(d) for d in new_degrees], unit=unit)
+
+    cmaj = build_scale("c'", 5)
+    mel0, mel1 = [], []
+    for i in range(2):
+        chords, names = random_chords(cmaj)
+        last_chord = chords[-1]
+        chords, names = chords[:-1], names[:-1]
+        mel0.extend(list(itertools.chain(*[pattern(cmaj, name2chord[name])\
+                                           for name in names])))
+        mel1.extend(add_rhythm(chords, unit=1))
+    mel1.append(last_chord)
+    main([mel0, mel1], heading=", ".join(names))
