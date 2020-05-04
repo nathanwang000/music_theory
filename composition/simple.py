@@ -1,3 +1,7 @@
+'''
+Write music by writing degrees and rhythm
+rest can be written as 'r' in degrees
+'''
 import itertools
 from functools import partial
 import numpy as np
@@ -13,17 +17,28 @@ name2chord = {
     'VIIdim': [7, 9, 11]
 }
 
-def main(lines, tempo='4=140', time_signature='4/4',
+name2staff = {
+    'piano': '\\new PianoStaff',
+    'drum': '\drums'
+}
+
+class Staff:
+    ''' staff is just a bunch of note with instrument info'''
+    def __init__(self, ts, instrument='piano'):
+        self.instrument = instrument
+        self.ts = ts
+
+def main(staffs, tempo='4=140', time_signature='4/4',
          heading='simple chord'):
     '''
-    lines: list of time serieses to play
+    staffs: some lines of music
     '''
-    assert type(lines[0]) in [tuple, list], "melodic lines should be list of list"
-    body = "\score{\n \\new PianoStaff << \n"
-    for ts in lines:
-        body += "  \\new Staff { \\clef treble \\tempo %s \\time %s "\
-                % (tempo, time_signature)
-        body += " ".join(ts)
+    assert type(staffs[0]) is Staff, 'melody should be list of staffs'
+    body = "\score{\n << \n"
+    for staff in staffs:
+        body += "%s { \\clef treble \\tempo %s \\time %s "\
+                % (name2staff[staff.instrument], tempo, time_signature)
+        body += " ".join(staff.ts)
         body += "}\n"
     body += ">>\n \layout {} \midi{} }\n"
 
@@ -90,7 +105,7 @@ def build_scale(root, mode='Ionian'):
     scale = build_scale('c', 'dorian')
     or
     scale = build_scale('c', 1)    
-    main([scale(i) for i in range(1, 8)])
+    main([Staff([scale(i) for i in range(1, 8)])])
     '''
     modes = ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian',
              'aeolian', 'locrian']
@@ -103,7 +118,9 @@ def build_scale(root, mode='Ionian'):
     n = note2number(root)
     
     def scale(degree):
-        '''degree can be a number, or a tuple with offset'''
+        '''degree can be a number, or a tuple with offset, or r for rest'''
+        if degree == 'r':
+            return 'r'
         if type(degree) is not int:
             degree, offset = degree
         else:
@@ -119,7 +136,9 @@ def invert(degrees, root=1):
     int or a tuple of int, treat root as the invariant'''
     res = []
     for d in degrees:
-        if type(d) is int:
+        if d == 'r':
+            res.append(d)
+        elif type(d) is int:
             res.append(root - (d-1))
         else:
             res.append([root - (d[0]-1), -d[1]])
@@ -187,7 +206,7 @@ def tweleve_bar_blues(scale=build_scale('c', 'ionian')):
           chords5[1], chords6[1], chords5[1], chords6[1],
           chords5[1], chords6[1], chords5[1], finish[1]]
     
-    main([ts], tempo='4=160')
+    main([Staff(ts)], tempo='4=160')
 
 ################## improvisation for 1 bar ########
 def random_notes(scale):
@@ -282,9 +301,25 @@ def dorian_improv():
                              assert_equal=False, unit=8) for _ in range(5)]
         upper = list(itertools.chain(*pieces))
 
-    lines = [upper, bass * 5]
+    lines = [Staff(upper),
+             Staff(bass * 5)]
     main(lines, tempo='4=100')
 
+################# drum machine #####################
+def drum_machine(rhythm, unit=8, instrument='hihat'):
+    '''
+    refer to an online drum machine for an implementation of this
+    negative rhythm is interpreted as rest
+    I need to make lines in main a dictionary with instrument!
+    it's a json document
+    '''
+    beat = list(map(lambda r: (["{}{}".format(instrument, unit)]\
+                               + ["r{}".format(unit)] * (r-1))\
+                    if r > 0 else ['r{}'.format(unit)] * (-r),
+                    rhythm))
+    beat = list(itertools.chain(*beat))
+    return beat
+    
 ################# variation helpers ################
 def melody_variation(degrees, rhythm, scale, unit,
                      degree_transform=lambda x: x,
@@ -294,7 +329,7 @@ def melody_variation(degrees, rhythm, scale, unit,
     degrees, rhythm, scale, unit
     This function takes the piece and transforms it with rhythm_transform
     and degree_transform
-    returns a timeseries, ts, playable by main([ts], tempo=tempo)
+    returns a timeseries, ts, playable by main
     '''
     ts = add_rhythm([scale(i) for i in degree_transform(degrees)],
                     rhythm_transform(rhythm), unit=unit)
@@ -330,7 +365,7 @@ def variation_idea0(degrees, rhythm, scale, unit, tempo):
     )
     
     # output sound
-    lines = [list(itertools.chain(*mels))]
+    lines = [Staff(list(itertools.chain(*mels)))]
     main(lines, tempo=tempo)
     
 ################# specific pieces ################
@@ -421,14 +456,15 @@ def suoluohe(mode=0):
 if __name__ == '__main__':
     # dorian_improv()
 
+    ### existing songs
     # variation_idea0(**pagnini24())
     # variation_idea0(**shengmusong())
     # variation_idea0(**changtingwai(0))
     # variation_idea0(**suoluohe(0))
 
-    ## playground of ideas
+    # ## playground of ideas
     # cmaj = build_scale("c'", 0)
-    # main([
+    # main([Staff(
     #     add_rhythm([chord(cmaj, [1, 3, 5, 8]), # 1, 8
     #                 chord(cmaj, [3, 5, 7, 7-7]), # 0, 7
     #                 chord(cmaj, [6, 8, 10-7, 8-7]), # 1, 8
@@ -437,14 +473,15 @@ if __name__ == '__main__':
     #                 chord(cmaj, [5, 7, 9, 11-7, 2]), # 2, 9
     #                 chord(cmaj, [1, 3, 5, 8])], # 1, 8
     #                unit=2),
-    # ])
+    # )])
 
+    ####### guitar practice
     def pattern(scale, degrees, unit=8):
         # todo: change the pattern below to create different excercises
         new_degrees = [degrees[i] for i in [0,1,2,1,2,0,1,2]]
         return add_rhythm([scale(d) for d in new_degrees], unit=unit)
 
-    cmaj = build_scale("c'", 5)
+    cmaj = build_scale("c'", 0)
     mel0, mel1 = [], []
     for i in range(2):
         chords, names = random_chords(cmaj)
@@ -453,5 +490,15 @@ if __name__ == '__main__':
         mel0.extend(list(itertools.chain(*[pattern(cmaj, name2chord[name])\
                                            for name in names])))
         mel1.extend(add_rhythm(chords, unit=1))
+    mel0.append('r1')
     mel1.append(last_chord)
-    main([mel0, mel1], heading=", ".join(names))
+
+    beat1 = drum_machine([-4,4]*10, unit=8, instrument='sn')
+    beat2 = drum_machine([-4,-1,1,1,1]*10, unit=8, instrument='hh')
+    
+    main([Staff(mel0),
+          Staff(mel1),
+          Staff(beat1, 'drum'),
+          Staff(beat2, 'drum')          
+    ],
+         heading=", ".join(names))    
