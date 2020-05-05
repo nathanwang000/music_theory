@@ -453,6 +453,11 @@ def suoluohe(mode=0):
     return {'degrees': degrees, 'rhythm': rhythm, 'scale': scale,
             'unit': unit, 'tempo': tempo}
 
+def chord_progression(chords, names, unit=1):
+    '''given a sequence of chords play the chords out'''
+    main([Staff(add_rhythm(chords, unit=unit))],
+         heading=", ".join(names))    
+    
 if __name__ == '__main__':
     # dorian_improv()
 
@@ -464,41 +469,57 @@ if __name__ == '__main__':
 
     # ## playground of ideas
     # cmaj = build_scale("c'", 0)
-    # main([Staff(
-    #     add_rhythm([chord(cmaj, [1, 3, 5, 8]), # 1, 8
-    #                 chord(cmaj, [3, 5, 7, 7-7]), # 0, 7
-    #                 chord(cmaj, [6, 8, 10-7, 8-7]), # 1, 8
-    #                 chord(cmaj, [8-7, 4, 6, 8]), # 1, 8 ###
-    #                 chord(cmaj, [2, 4, 6, 2+7]), # 2, 9
-    #                 chord(cmaj, [5, 7, 9, 11-7, 2]), # 2, 9
-    #                 chord(cmaj, [1, 3, 5, 8])], # 1, 8
-    #                unit=2),
-    # )])
+    # chords = [
+    #     chord(cmaj, [2,4+7,6,8]),
+    #     chord(cmaj, [5,7+7,9,11]),
+    #     chord(cmaj, [1,3+14,5,7]),
+    # ]
+    # names = ['2', '5', '1']
+    # chord_progression(chords, names)
 
-    ####### guitar practice
+    # ####### guitar practice
     def pattern(scale, degrees, unit=8):
         # todo: change the pattern below to create different excercises
+        # rhythm = [3,1,3,1,3,1,1,1,1,1]
+        # new_degrees = [degrees[i] for i in np.random.choice(3, len(rhythm))]
+        # return add_rhythm([scale(d) for d in new_degrees],
+        #                   rhythm, unit=unit)
+        ### idea 1
         new_degrees = [degrees[i] for i in [0,1,2,1,2,0,1,2]]
+        # new_degrees = [degrees[i] for i in [0,1,2,2,1,0]]
         return add_rhythm([scale(d) for d in new_degrees], unit=unit)
 
     cmaj = build_scale("c'", 0)
     mel0, mel1 = [], []
+    n_measures = 0
     for i in range(2):
         chords, names = random_chords(cmaj)
         last_chord = chords[-1]
         chords, names = chords[:-1], names[:-1]
         mel0.extend(list(itertools.chain(*[pattern(cmaj, name2chord[name])\
                                            for name in names])))
+        
+        # mel1.extend(add_rhythm(list(itertools.chain(*[[chord, chord]for chord in chords])), unit=1))
+        # n_measures += len(chords) * 2
+        
         mel1.extend(add_rhythm(chords, unit=1))
+        # mel1.extend(add_rhythm(chords, [3]*len(chords),
+        #                        unit=4))
+        n_measures += len(chords)
+        
     mel0.append('r1')
     mel1.append(last_chord)
 
-    beat1 = drum_machine([-4,4]*10, unit=8, instrument='sn')
-    beat2 = drum_machine([-4,-1,1,1,1]*10, unit=8, instrument='hh')
+    repeat = n_measures
+    beat1 = drum_machine([-4,4]*repeat, unit=8, instrument='sn') + ['r1']
+    beat2 = drum_machine([-4,-1,1,1,1]*repeat, unit=8, instrument='hh') + ['r1']
+    # beat1 = drum_machine([-3,3]*repeat, unit=8, instrument='sn') + ['r1']
+    # beat2 = drum_machine([-3,-1,1,1]*repeat, unit=8, instrument='hh') + ['r1']
     
     main([Staff(mel0),
           Staff(mel1),
           Staff(beat1, 'drum'),
           Staff(beat2, 'drum')          
     ],
-         heading=", ".join(names))    
+         heading=", ".join(names),
+         tempo='4=80')    
