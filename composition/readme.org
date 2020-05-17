@@ -27,3 +27,39 @@ examples includes
 
 - MDP
 
+** technical note
+
+To really have this usable by others, I'd better transcribe the functionality into JavaScript. 
+
+As a first step, I should support 
+- [ ] adding rhythm (creating an infinite loop of rhythm)
+- [ ] specifying tempo
+- [ ] adding melody in terms of scales 
+- [ ] start and pause the generated music: http://www.midijs.net/
+
+** meta note on the creative process
+
+Machine learning, or learning from previous data, is good at capturing statistical correlations. However, pieces generated in this way could never be considered innovative, because it just doesn't generate music outside of the training distribution.
+
+Thus, we need to break rules/structures/association in the joint distribution of (input, output) pairs to create new genres of music. This is a similar process to intervention in causal inference. One need to define actions that changes the input structure, while still hoping listeners would love the music (unheard of before).
+
+These actions are the knobs that affect the graph structure in input. Famous examples include the do(x) notation which removes the incoming edges to the node x. We can define other actions as well.
+
+Ideally, actions can be guided automatically by a likable function (a function that predict whether people will like the piece based on say, novelty and relatedness). However, it is hard to train the likable function because we don't know what people like and considers to be novel (does one hacking one note count as novel? there are many exceptions to the rules). It's probably easier to define variations that are not likable and train the action generator by these variations.
+
+A concrete process could be
+1. learn a model m that models the joint distribution of input
+2. filter possible actions by the not likable function
+3. apply the filtered actions on models to elicit user feedback
+
+** todo
+
+- [ ] scale with purpose
+- [ ] simple picking pattern with chord progression
+- [ ] add rhythmic percussion
+- [ ] add solo lines  
+* Fun Application
+
+- [ ] turn rap songs into instrument tempos and apply to classical music
+- [ ] given a video, output a score
+- [ ] harmonizing human sentence
