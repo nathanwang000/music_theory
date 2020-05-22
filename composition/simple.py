@@ -82,7 +82,7 @@ def main(staffs, tempo='4=140', time_signature='4/4', key='c \major',
 
     if add_metronome:
         staffs.append(Staff(['hh4'] * 4 * metronome_measures, 'drum'))
-    
+
     body = "\score{\n << \n"
     for staff in staffs:
         body += "%s { \\clef %s \\tempo %s \\time %s %s \n"\
@@ -110,7 +110,7 @@ def binarize(n):
         binary_repr.append(digit)
     binary_repr = binary_repr[::-1]
     return binary_repr
-    
+
 def chord(scale, degrees):
     '''a chord'''
     return '<' + " ".join([scale(d) for d in degrees]) + ">"
@@ -141,13 +141,13 @@ def note2number(note):
             c = ""
         elif c == "'":
             n += 12
-            c = ""            
+            c = ""
         elif c == ',':
             n -= 12
             c = ""
     assert c == "", "have unparsed note {}".format(c)
     return n
-            
+
 def number2note(n):
     '''
     the inverse of note2number
@@ -164,7 +164,7 @@ def build_scale(root, mode='Ionian'):
     example usage:
     scale = build_scale('c', 'dorian')
     or
-    scale = build_scale('c', 1)    
+    scale = build_scale('c', 1)
     main([Staff([scale(i) for i in range(1, 8)])])
     '''
     modes = ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian',
@@ -176,7 +176,7 @@ def build_scale(root, mode='Ionian'):
     diffs = [2, 2, 1, 2, 2, 2, 1] # diff between nodes in 'ionian'
     diffs = np.cumsum([0] + diffs[mode:] + diffs[:mode])
     n = note2number(root)
-    
+
     def scale(degree):
         '''degree can be a number, or a tuple with offset, or r for rest'''
         if type(degree) in [tuple, list]:
@@ -187,7 +187,7 @@ def build_scale(root, mode='Ionian'):
             return degree # handles cases like 'r', 'hihat' etc.
         idx, span  = (degree - 1) % 7, (degree - 1) // 7
         return number2note(n + span * 12 + diffs[idx] + offset)
-    
+
     return scale
 
 ################## degrees manipulation ############
@@ -207,6 +207,10 @@ def invert(degrees, root=1):
 ################## add flavors #############
 def add_rhythm(notes, rhythm=None, unit=16):
     '''
+    if rhythm is None, each note takes unit time
+    if rhythm are more than notes, notes are repeated
+    
+    notes: notes to add rhythm to
     unit: the smallest granularity
     rhythm: [2, 3] means a 2 units note followed by a 3 units note,
             which is short hand for [(1, 2), (1, 3)]
@@ -215,6 +219,8 @@ def add_rhythm(notes, rhythm=None, unit=16):
             (3, 2) means 3 notes taking 2 unit times
     output: list of notes with rhythm
     '''
+    if len(notes) == 0: return []
+    
     if rhythm is None:
         rhythm = [1] * len(notes)
 
@@ -251,7 +257,7 @@ def add_rhythm(notes, rhythm=None, unit=16):
                 notes[i] += '~'
 
         return ' '.join(notes)
-        
+
     def rhythm_to_noteconsumer(rhythm):
         '''
         Given a rhythm list, return a note consumer
@@ -261,12 +267,18 @@ def add_rhythm(notes, rhythm=None, unit=16):
         output: list of notes embellished by rhythm
         '''
         def consumer(notes):
+            orig_notes = notes
             out = []
             for duration in rhythm:
                 if type(duration) in [tuple, list]: # tuplet
                     n_to_eat, duration = duration
                 else: # regular
                     n_to_eat = 1
+
+                # append more notes when notes run out
+                if len(notes) < n_to_eat:
+                    notes = notes + orig_notes
+                
                 consumed = notes[:n_to_eat]
                 notes = notes[n_to_eat:]
 
@@ -278,11 +290,11 @@ def add_rhythm(notes, rhythm=None, unit=16):
                         ['{}{}'.format(note, unit) for note in consumed] +
                         ['}']
                     )
- 
+
             return out
-            
+
         return consumer
-    
+
     return rhythm_to_noteconsumer(rhythm)(notes)
 
 def add_chord_names(chords):
@@ -298,7 +310,7 @@ def add_chord_names(chords):
 def tweleve_bar_blues(scale=build_scale('c', 'ionian')):
     # https://www.youtube.com/watch?v=BjhkClSUdYM
     '''
-    12 bar blues 
+    12 bar blues
     example usage:
     scale = build_scale('c', 'dorian')
     tweleve_bar_blues(scale)
@@ -307,21 +319,21 @@ def tweleve_bar_blues(scale=build_scale('c', 'ionian')):
     chords6 = [swing(chord(scale, [i,i+5])) for i in range(8)]
     finish = [swing(chord(scale, [i,i+5]),
                     chord(scale, [i,i+4])) + r"\fermata" for i in range(8)]
-    
+
     # 12 bar blues
     ts = [chords5[1], chords6[1], chords5[1], chords6[1],
           chords5[1], chords6[1], chords5[1], chords6[1],
           chords5[1], chords6[1], chords5[1], chords6[1],
-          chords5[1], chords6[1], chords5[1], chords6[1],          
+          chords5[1], chords6[1], chords5[1], chords6[1],
           chords5[4], chords6[4], chords5[4], chords6[4],
-          chords5[4], chords6[4], chords5[4], chords6[4],          
-          chords5[1], chords6[1], chords5[1], chords6[1],          
+          chords5[4], chords6[4], chords5[4], chords6[4],
+          chords5[1], chords6[1], chords5[1], chords6[1],
           chords5[1], chords6[1], chords5[1], chords6[1],
           chords5[5], chords6[5], chords5[5], chords6[5],
-          chords5[4], chords6[4], chords5[4], chords6[4],                    
+          chords5[4], chords6[4], chords5[4], chords6[4],
           chords5[1], chords6[1], chords5[1], chords6[1],
           chords5[1], chords6[1], chords5[1], finish[1]]
-    
+
     main([Staff(ts)], tempo='4=160')
 
 ################## improvisation for 1 bar ########
@@ -330,7 +342,7 @@ def random_notes(scale):
     random for 1 bar, choose from a scale and the rest bar
     '''
     choose_from = [scale(i) for i in range(1,8)] + ['r']
-    # return [scale(i) for i in np.random.choice(range(1,8), 7)] + ['r']    
+    # return [scale(i) for i in np.random.choice(range(1,8), 7)] + ['r']
     return np.random.choice(choose_from, 8)
 
 def up_scale(scale):
@@ -387,7 +399,7 @@ def dorian_improv():
     main(lines, tempo='4=100')
 
 ################## chord progressions #############
-'''standard chord progressions 
+'''standard chord progressions
 and chord progressions that I picked up over the years
 '''
 def random_functional_chords(scale, M=None, m=None):
@@ -416,14 +428,14 @@ def random_functional_chords(scale, M=None, m=None):
         if min(new_degrees) > m + 1:
            new_degrees.append(max(new_degrees) - 7)
         if max(new_degrees) < M - 1:
-           new_degrees.append(min(new_degrees) + 7)            
+           new_degrees.append(min(new_degrees) + 7)
         return new_degrees
 
     matched_chords_deg = []
     for degrees in chords_deg:
         degrees = match_max_min(degrees, M, m)
         matched_chords_deg.append(degrees)
-        M, m = max(degrees), min(degrees)        
+        M, m = max(degrees), min(degrees)
     return [chord(scale, i) for i in matched_chords_deg], names
 
 def chord_progression0():
@@ -446,14 +458,13 @@ def licks_between_chords(chords):
         # add scale
 
     main([Staff(mel)])
-    
-    
+
 ############ drum machine: deprecated, should use melody ######
 def drum_machine(rhythm, unit=8, instrument='hihat'):
     '''
     refer to an online drum machine for an implementation of this
     negative rhythm is interpreted as rest
-    this is DEPRECATED, 
+    this is DEPRECATED,
     please use Staff(melody(['hh','r','sn'], [1,2,3]), 'drum') instead
     '''
     beat = list(map(lambda r: (["{}{}".format(instrument, unit)]\
@@ -462,7 +473,7 @@ def drum_machine(rhythm, unit=8, instrument='hihat'):
                     rhythm))
     beat = list(itertools.chain(*beat))
     return beat
-    
+
 ################# variation helpers ################
 def melody(degrees, rhythm=None, scale=build_scale("c'"), unit=4,
            degree_transform=lambda x: x,
@@ -481,10 +492,10 @@ def melody(degrees, rhythm=None, scale=build_scale("c'"), unit=4,
 ################# specific variations #############
 def variation_idea0(degrees, rhythm, scale, unit, tempo):
     '''
-    uses melody and performs certain predefined 
+    uses melody and performs certain predefined
     variation on a given piece
     '''
-    mels = []    
+    mels = []
     # original melody
     mels.append(melody(degrees, rhythm, scale, unit))
     # build other variations
@@ -501,12 +512,12 @@ def variation_idea0(degrees, rhythm, scale, unit, tempo):
     mels.append(add_rhythm(up_scale(s), unit=unit))
     mels.append(add_rhythm(down_scale(s), unit=unit))
     mels.append(
-        add_rhythm([chord(s, [1, 3, 5]), 
-                    chord(s, [0, 2, 4, (6, -1)]), 
+        add_rhythm([chord(s, [1, 3, 5]),
+                    chord(s, [0, 2, 4, (6, -1)]),
                     chord(s, [1-7, 3-7, 5-7])],
                    unit=2),
     )
-    
+
     # output sound
     lines = [Staff(list(itertools.chain(*mels)))]
     main(lines, tempo=tempo)
@@ -535,10 +546,10 @@ def practice0():
         chords, names = chords[:-1], names[:-1]
         mel0.extend(list(itertools.chain(*[pattern(cmaj, name2chord[name])\
                                            for name in names])))
-        
+
         mel1.extend(add_rhythm(chords, unit=1))
         n_measures += len(chords)
-        
+
     mel0.append('r1')
     mel1.append(last_chord)
     mel1 = add_chord_names(mel1) # add chord names
@@ -549,20 +560,20 @@ def practice0():
     main([Staff(mel0),
           Staff(mel1),
           Staff(beat1, 'drum'),
-          Staff(beat2, 'drum')          
+          Staff(beat2, 'drum')
     ],
          heading=", ".join(names),
-         tempo='4=80')    
+         tempo='4=80')
 
 ######## finger picking patterns practice #########
 def finger_picking0(add_beats=False):
-    ''' 
+    '''
     finger picking pattern practice 2 in epic fingerpicking patterns
     tutorial
     '''
     scale = build_scale("d'", 0)
     unit = 8
-    tempo = '4=100' 
+    tempo = '4=100'
     degrees = [
         *([1, 3+7] * 4),
         *([5-7, 2+7] * 4),
@@ -579,24 +590,24 @@ def finger_picking0(add_beats=False):
     # final chord
     mel += add_rhythm([chord(scale, [1, 5, 1+7, 2+7, 3+7])], unit=4)
     staffs = [Staff(mel)]
-    
+
     # add some beat
     if add_beats:
         repeat = 8
         beat = melody(['sn', 'hh', 'sn', 'sn', 'sn', 'hh', 'sn'],
                       [4, 3, 1, 2, 2, 2, 2], unit=16)
         staffs.append(Staff(beat * repeat + ['r1'], 'drum'))
-    
+
     main(staffs, tempo=tempo, key='d \major')
-    
+
 def finger_picking1(add_beats=False):
-    ''' 
+    '''
     finger picking pattern practice 3 in epic fingerpicking patterns
     tutorial, thumb, index, and middle
     '''
     scale = build_scale("e'", 0)
     unit = 8
-    tempo = '4=100' 
+    tempo = '4=100'
     degrees = [
         1, 1+7, 5,
         3, 1+7, 5,
@@ -613,7 +624,7 @@ def finger_picking1(add_beats=False):
         4, 1+7, 5,
         (3,-1), 1+7, 5,
         (2,-1), 1+7,
-        
+
         # 4, 6, 5,
         # 4, 3, 2, 1
     ]
@@ -624,11 +635,55 @@ def finger_picking1(add_beats=False):
     main([Staff(mel)], tempo=tempo, add_metronome=add_beats,
          metronome_measures=5)
 
+################# drum patterns ##################
+def rhythm1(degrees=None, repeat=2, instrument='piano', tempo="4=120"):
+    '''
+    blues rhythm
+    '''
+    rhythm = [
+        2, 1, 1, 2,
+        2, 2, 2
+    ] * repeat
+    if degrees is None:
+        degrees = ['hh']
+        instrument = 'drum'
+    mel = melody(degrees, rhythm, unit=16)
+    staff = Staff(mel, instrument)
+    main([staff], time_signature="3/4", tempo=tempo)
+
+################# my own pieces ##################
+def motive0():
+    '''
+    as sad and detached motive
+    '''
+    scale = build_scale("c'", 0)
+    unit = 8
+    tempo = '4=80'
+    degrees = [
+        'r', 7, 7, 5, 3, 2, 3, 6,
+        4, 3, 4, 3, 4, 6, 5
+    ]
+    rhythm = [
+        8, 3, 1, 1, 1, 1, 1, 8,
+        3, 1, 1, 1, 1, 1, 8
+    ]
+    degrees2 = [
+        'r', 1, 1, 'r', 4, 4, 2, 6-7,
+        6, 'r', 'r', 3, 1
+    ]
+    rhythm2 = [
+        6, 2, 4, 4, 1, 2, 2, 3,
+        4, 4, 1, 2, 5
+    ]
+    mel = melody(degrees, rhythm, scale, unit)
+    mel2 = melody(degrees2, rhythm2, scale, unit)
+    main([Staff(mel), Staff(mel2)], tempo=tempo)
+
 ################# specific pieces ################
 def pagnini24(mode='aeolian'):
     scale = build_scale("a'", mode)
     unit = 16
-    tempo = '4=140'    
+    tempo = '4=140'
     degrees = [1, 1,
                1, 3, 2, 1,
                5, 5-7,
@@ -649,9 +704,9 @@ def pagnini24(mode='aeolian'):
             'unit': unit, 'tempo': tempo}
 
 def shengmusong(mode=0):
-    ##### this is for shengmusong 
+    ##### this is for shengmusong
     scale = build_scale("c''", mode=mode)
-    tempo = '4=140'        
+    tempo = '4=140'
     unit = 4
     degrees = [
         3, 4, 5, 2, 3,
@@ -718,7 +773,7 @@ def nice_chord_c():
                   [7, 1, 3, 1] * 4 + [12], unit=16)
     main([Staff(mel),
           Staff(drum, clef='bass')], time_signature="3/4")
-    
+
 def play_notes(notes, unit=1, heading=""):
     '''use simple rhythm to play out specified notes or chords'''
     main([Staff(add_rhythm(notes, unit=unit))], heading=heading)
@@ -732,13 +787,13 @@ def chord_mode(chords, rhythm=None, unit=1):
         #     idx += 1
         # return idx
         return re.search("[a-z][es|is]*['|,]*", note_str).end()
-    
+
     def add_modifiers(chords, modifiers):
         # return [(c if m == '' else c + ':' + m)
         #         for c, m in zip(chords, modifiers)]
         return [(c + m)
                 for c, m in zip(chords, modifiers)]
-    
+
     chords, modifiers = list(zip(*map(lambda c:
                                       #c.split(':') if ':' in c else [c,''],
                                       (c[:idx_end_note(c)],
@@ -753,7 +808,7 @@ def chord_mode(chords, rhythm=None, unit=1):
 def play_chord_mode(chords, rhythm=None, unit=1, heading=""):
     chords = chord_mode(chords, rhythm, unit)
     main([Staff(chords)], heading=heading)
-    
+
 if __name__ == '__main__':
     # dorian_improv()
 
@@ -773,7 +828,7 @@ if __name__ == '__main__':
     # ]
     # names = ['2', '5', '1']
     # play_notes(chords, heading=" ".join(names))
-    
+
     ### easy way to play chords
     # play_chord_mode(['c', 'd:7', 'g'])
 
@@ -782,5 +837,9 @@ if __name__ == '__main__':
     # finger_picking0(add_beats=True)
     # finger_picking1(add_beats=True)
     # chord_progression0()
-    # chord_progression1()    
-    licks_between_chords(['b:m', 'g', 'd', 'a'])
+    # chord_progression1()
+    # licks_between_chords(['b:m', 'g', 'd', 'a'])
+
+    # motive0()
+    rhythm1([1, 2, 3, 2, 4, 0, 1], repeat=2)
+    # rhythm1()
