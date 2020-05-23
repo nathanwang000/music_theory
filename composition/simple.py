@@ -680,6 +680,10 @@ def motive0():
     main([Staff(mel), Staff(mel2)], tempo=tempo)
 
 ################# specific pieces ################
+def japanese_vibe():
+    degrees = [3, 4, 6, 7, 8, 7, 6, 4, 3]
+    main([Staff(melody(degrees, [1]*len(degrees)))])
+    
 def pagnini24(mode='aeolian'):
     scale = build_scale("a'", mode)
     unit = 16
@@ -841,5 +845,6 @@ if __name__ == '__main__':
     # licks_between_chords(['b:m', 'g', 'd', 'a'])
 
     # motive0()
-    rhythm1([1, 2, 3, 2, 4, 0, 1], repeat=2)
+    # rhythm1([1, 2, 3, 2, 4, 0, 1], repeat=2)
     # rhythm1()
+    japanese_vibe()
