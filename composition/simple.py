@@ -537,14 +537,15 @@ def practice0():
         # new_degrees = [degrees[i] for i in [0,1,2,2,1,0]]
         return add_rhythm([scale(d) for d in new_degrees], unit=unit)
 
-    cmaj = build_scale("c'", 0)
+    root = chr(ord('a') + np.random.randint(8))
+    scale = build_scale("{}'".format(root), 0)    
     mel0, mel1 = [], []
     n_measures = 0
     for i in range(2):
-        chords, names = random_functional_chords(cmaj)
+        chords, names = random_functional_chords(scale)
         last_chord = chords[-1]
         chords, names = chords[:-1], names[:-1]
-        mel0.extend(list(itertools.chain(*[pattern(cmaj, name2chord[name])\
+        mel0.extend(list(itertools.chain(*[pattern(scale, name2chord[name])\
                                            for name in names])))
 
         mel1.extend(add_rhythm(chords, unit=1))
@@ -836,8 +837,10 @@ if __name__ == '__main__':
     ### easy way to play chords
     # play_chord_mode(['c', 'd:7', 'g'])
 
+    # japanese_vibe()
+
     ####### guitar daily practice
-    # practice0()
+    practice0()
     # finger_picking0(add_beats=True)
     # finger_picking1(add_beats=True)
     # chord_progression0()
@@ -847,4 +850,3 @@ if __name__ == '__main__':
     # motive0()
     # rhythm1([1, 2, 3, 2, 4, 0, 1], repeat=2)
     # rhythm1()
-    japanese_vibe()
